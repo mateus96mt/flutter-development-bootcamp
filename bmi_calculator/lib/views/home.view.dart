@@ -254,36 +254,40 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  child: Container(
-                    padding: EdgeInsets.all(15),
+                Expanded(
+                  child: roundedButton(
                     child: Icon(FontAwesomeIcons.minus),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF2D2F43),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    voidCallback: decreaseCallBack,
                   ),
-                  onTap: decreaseCallBack,
                 ),
                 SizedBox(
                   width: 10,
                 ),
-                GestureDetector(
-                  child: Container(
-                    padding: EdgeInsets.all(15),
+                Expanded(
+                  child: roundedButton(
                     child: Icon(FontAwesomeIcons.plus),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF2D2F43),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    voidCallback: increaseCallBack,
                   ),
-                  onTap: increaseCallBack,
                 ),
               ],
             ),
           ),
         )
       ],
+    );
+  }
+
+  Widget roundedButton(
+      {VoidCallback? voidCallback, Color? color, required Widget child}) {
+    return RawMaterialButton(
+      onPressed: voidCallback,
+      shape: CircleBorder(),
+      child: child,
+      // constraints: BoxConstraints.tightFor(
+      //   width: 56,
+      //   height: 56,
+      // ),
+      fillColor: color ?? Color(0xFF2D2F43),
     );
   }
 }
