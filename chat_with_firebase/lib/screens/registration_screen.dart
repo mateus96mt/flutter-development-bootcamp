@@ -11,8 +11,8 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _auth = FirebaseAuth.instance;
-  String email;
-  String password;
+  TextEditingController emailTextEditingController = TextEditingController();
+  TextEditingController passwordTextEditingController = TextEditingController();
 
   @override
   void initState() {
@@ -31,22 +31,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Hero(
-                child: Container(
-                  height: 200.0,
-                  child: Image.asset('images/logo.png'),
-                ),
-                tag: 'logo',
+              Row(
+                children: [
+                  Hero(
+                    child: Container(
+                      height: 200.0,
+                      child: Image.asset('images/logo.png'),
+                    ),
+                    tag: 'logo',
+                  ),
+                  Expanded(
+                    child: Text(
+                      'REGISTER',
+                      style: TextStyle(fontSize: 36),
+                    ),
+                  )
+                ],
               ),
               SizedBox(
                 height: 48.0,
               ),
               TextField(
+                controller: emailTextEditingController,
                 keyboardType: TextInputType.emailAddress,
                 style: TextStyle(color: Colors.black),
-                onChanged: (value) {
-                  this.email = value;
-                },
                 decoration: InputDecoration(
                   hintText: 'Enter your email',
                   contentPadding:
@@ -70,12 +78,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 height: 8.0,
               ),
               TextField(
+                controller: passwordTextEditingController,
                 cursorColor: Colors.black,
                 obscureText: true,
                 style: TextStyle(color: Colors.black),
-                onChanged: (value) {
-                  this.password = value;
-                },
                 decoration: InputDecoration(
                   hintText: 'Enter your password',
                   fillColor: Colors.black,
@@ -113,9 +119,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       // print(this.password);
                       try {
                         final newUser = _auth.createUserWithEmailAndPassword(
-                            email: email, password: password);
+                            email: emailTextEditingController.text,
+                            password: passwordTextEditingController.text);
                         if (newUser != null) {
-                          print("Created user $email:$password");
+                          print(
+                              "Created user ${emailTextEditingController.text}:${passwordTextEditingController.text}");
                           Navigator.pushNamed(context, ChatScreen.id);
                         }
                       } catch (e) {
