@@ -125,7 +125,7 @@ class _TaskScreenState extends State<TaskScreen> {
           ),
           separator(),
           Text(
-            '12 tasks',
+            '${this.tasksList.length} tasks',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -254,7 +254,7 @@ class _TaskScreenState extends State<TaskScreen> {
     showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('Deleting all items'),
+        title: Text('Deleting all ${this.tasksList.length} items'),
         content: Text('Are you sure you want to all items?'),
         actions: <Widget>[
           TextButton(
