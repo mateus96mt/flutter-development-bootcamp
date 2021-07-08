@@ -4,6 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
+class Message {
+  String text;
+  String sender;
+  DateTime timestamp;
+
+  Message(this.text, this.sender, this.timestamp);
+}
+
 class ChatScreen extends StatefulWidget {
   static const String id = 'chat_screen';
 
@@ -33,6 +41,13 @@ class _ChatScreenState extends State<ChatScreen> {
     final messages = await _fireStore.collection('chat_rooms').get();
     for (var message in messages.docs) {
       print('${message.id}: ${message.data()}');
+    }
+  }
+
+  void deleteMessages() async {
+    final messages = await _fireStore.collection('messages').get();
+    for (var message in messages.docs) {
+      _fireStore.collection('messages').doc(message.id).delete();
     }
   }
 
@@ -94,44 +109,38 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   FlatButton(
                     onPressed: () {
+                      String textToSend = textEditingController.text;
+                      this.textEditingController.clear();
+                      setState(() {});
                       final user = _auth.currentUser;
-                      _fireStore.collection('chat_rooms').add(
-                        {
-                          'text': textEditingController.text,
-                          'sender': user.email
-                        },
-                      ).then((value) {
-                        showDialog<String>(
-                          context: context,
-                          builder: (BuildContext context) => AlertDialog(
-                            title: Text('Message sended!'),
-                            content: Text(
-                                'The text message \'${textEditingController.text}\''),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, 'OK'),
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).catchError(
-                        (onError) {
-                          showDialog<String>(
-                            context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                              title: Text('An error has ocurred!'),
-                              content: Text('Error: ${onError.toString()}'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, 'OK'),
-                                  child: const Text('OK'),
+                      _fireStore
+                          .collection('messages')
+                          .add(
+                            {
+                              'text': textToSend,
+                              'sender': user.email,
+                              'timestamp': DateTime.now().toIso8601String()
+                            },
+                          )
+                          .then((value) {})
+                          .catchError(
+                            (onError) {
+                              showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: Text('An error has ocurred!'),
+                                  content: Text('Error: ${onError.toString()}'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, 'OK'),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           );
-                        },
-                      );
                     },
                     child: Text(
                       'Send',
@@ -141,18 +150,68 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-            FlatButton(
-              onPressed: () {
-                DocumentReference<Map<String, dynamic>> doc = _fireStore
-                    .collection('chat_rooms')
-                    .doc('mateus96mt@gmail.com-angela@gmail.com');
+            StreamBuilder<QuerySnapshot>(
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final messages = snapshot.data.docs;
+                  List<Message> messagesObjects = [];
+                  for (var message in messages) {
+                    final messageJson = message.data() as Map<String, dynamic>;
+                    final messageText = messageJson['text'];
+                    final messageSender = messageJson['sender'];
+                    final messageTimeStamp = messageJson['timestamp'];
 
-                doc.collection('messages').add({'teste': 'test'}).then((value) {
-                  print("FINISH");
-                });
-                // getMessages();
+                    final messageObject = Message(
+                      messageText,
+                      messageSender,
+                      DateTime.tryParse(messageTimeStamp) ?? DateTime.now(),
+                    );
+                    messagesObjects.add(messageObject);
+                  }
+
+                  messagesObjects.sort((Message a, Message b) {
+                    return a.timestamp.difference(b.timestamp).inMilliseconds;
+                  });
+
+                  return Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.only(left: 20, right: 20),
+                      children: [
+                        for (Message messageObj in messagesObjects)
+                          Text(
+                            // '${messageObj.timestamp.microsecondsSinceEpoch}',
+                            '${messageObj.sender}: ${messageObj.text}\n',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          )
+                      ],
+                    ),
+                  );
+                  return Container();
+                } else {
+                  return Container();
+                }
               },
-              child: Text('TESTING'),
+              stream: _fireStore.collection('messages').snapshots(),
+            ),
+            FlatButton(
+              color: Colors.redAccent,
+              onPressed: () {
+                deleteMessages();
+
+                // DocumentReference<Map<String, dynamic>> doc = _fireStore
+                //     .collection('chat_rooms')
+                //     .doc('mateus96mt@gmail.com-angela@gmail.com');
+                //
+                // doc
+                //     .collection('messages')
+                //     .add({'teste': 'test'}).then((value) {
+                //   print("FINISH");
+                // });
+                // // getMessages();
+              },
+              child: Text('DELETE ALL'),
             ),
           ],
         ),
